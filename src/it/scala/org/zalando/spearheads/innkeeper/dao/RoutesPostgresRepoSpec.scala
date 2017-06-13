@@ -322,6 +322,20 @@ class RoutesPostgresRepoSpec extends FunSpec with BeforeAndAfter with Matchers w
         val result: Seq[(RouteRow, PathRow)] = routesRepo.selectFiltered()
         result.size should be (2)
       }
+
+      it("should select routes with pagination") {
+        insertRoute("R1")
+        insertRoute("R2")
+        val route3 = insertRoute("R3")
+        val route4 = insertRoute("R4")
+        insertRoute("R5")
+
+        val result: Seq[(RouteRow, PathRow)] = routesRepo.selectFiltered(Seq.empty, Some(Pagination(2, 2)))
+        // TODO: Test also order.
+        result.flatMap(_._1.id).toSet should be (Set(route3.id, route4.id).flatten)
+      }
+
+      // TODO: Test filtering and pagination together.
     }
 
     describe("#selectActiveRoutesData") {

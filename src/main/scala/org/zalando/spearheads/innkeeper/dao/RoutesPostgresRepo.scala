@@ -45,7 +45,7 @@ class RoutesPostgresRepo @Inject() (
     }.map(_.headOption)
   }
 
-  override def selectFiltered(filters: Seq[QueryFilter] = Seq.empty): DatabasePublisher[(RouteRow, PathRow)] = {
+  override def selectFiltered(filters: Seq[QueryFilter] = Seq.empty, pagination: Option[Pagination] = None): DatabasePublisher[(RouteRow, PathRow)] = {
     logger.debug(s"selectFiltered $filters")
 
     val query = for {
@@ -53,8 +53,14 @@ class RoutesPostgresRepo @Inject() (
       if matchesFilters(filters, routesTable, pathsTable)
     } yield (routesTable, pathsTable)
 
+    val queryWithPagination = pagination match {
+      case None => query
+      case Some(Pagination(page, perPage)) =>
+        query.sortBy(_._1.id.asc).drop((page - 1) * perPage).take(perPage)
+    }
+
     db.stream {
-      query.result
+      queryWithPagination.result
     }
   }
 

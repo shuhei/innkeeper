@@ -7,7 +7,7 @@ import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import org.zalando.spearheads.innkeeper.api.JsonProtocols._
 import org.zalando.spearheads.innkeeper.api.{Host, NewRoute, PathOut, RouteIn, RouteName, RouteOut, RoutePatch, UserName}
-import org.zalando.spearheads.innkeeper.dao.{AuditType, AuditsRepo, Embed, HostsEmbed, PathRow, PathEmbed, QueryFilter, RouteRow, RoutesRepo}
+import org.zalando.spearheads.innkeeper.dao.{AuditType, AuditsRepo, Embed, HostsEmbed, Pagination, PathRow, PathEmbed, QueryFilter, RouteRow, RoutesRepo}
 import org.zalando.spearheads.innkeeper.services.ServiceResult._
 import org.zalando.spearheads.innkeeper.utils.EnvConfig
 import spray.json.{pimpAny, pimpString}
@@ -34,7 +34,7 @@ trait RoutesService {
    */
   def removeFiltered(filters: Seq[QueryFilter], userName: String): Future[Result[Int]]
 
-  def findFiltered(filters: Seq[QueryFilter], embed: Set[Embed]): Source[RouteOut, NotUsed]
+  def findFiltered(filters: Seq[QueryFilter], embed: Set[Embed], pagination: Option[Pagination]): Source[RouteOut, NotUsed]
 
   def findById(id: Long, embed: Set[Embed]): Future[Result[RouteOut]]
 
@@ -153,7 +153,7 @@ class DefaultRoutesService @Inject() (
     }
   }
 
-  override def findFiltered(filters: Seq[QueryFilter], embed: Set[Embed]): Source[RouteOut, NotUsed] = {
+  override def findFiltered(filters: Seq[QueryFilter], embed: Set[Embed], pagination: Option[Pagination] = None): Source[RouteOut, NotUsed] = {
     Source.fromPublisher(routesRepo.selectFiltered(filters).mapResult {
       case (routeRow, pathRow) =>
         routeRow.id.map { id =>

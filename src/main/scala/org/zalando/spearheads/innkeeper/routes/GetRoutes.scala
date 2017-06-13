@@ -60,10 +60,12 @@ class GetRoutes @Inject() (
                 case _ => None
               }.toList
 
-              logger.debug(s"Filters $filters. Embed: $embed")
+              val pagination = None
+
+              logger.debug(s"Filters: $filters. Embed: $embed. Pagination: $pagination")
 
               chunkedResponseOf[RouteOut](jsonService) {
-                routesService.findFiltered(filters, embed)
+                routesService.findFiltered(filters, embed, pagination)
               }
             }
           }
