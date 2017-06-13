@@ -71,6 +71,18 @@ class GetRouteSpec extends FunSpec with BeforeAndAfter with Matchers {
           routePredicatesShouldBeCorrect(route)
         }
       }
+
+      describe("when with pagination") {
+        it("should return routes with the pagination") {
+          insertRoute("R1")
+          insertRoute("R2")
+          insertRoute("R3")
+          insertRoute("R4")
+          insertRoute("R5")
+
+          // TODO: Write test here.
+        }
+      }
     }
 
     describe("failure") {

@@ -1,6 +1,6 @@
 package org.zalando.spearheads.innkeeper.routes
 
-import akka.http.scaladsl.server.Directives.{get, parameterMultiMap}
+import akka.http.scaladsl.server.Directives.{get, parameterMultiMap, parameters}
 import akka.http.scaladsl.server.Route
 import com.google.inject.Inject
 import org.slf4j.LoggerFactory
@@ -11,7 +11,8 @@ import org.zalando.spearheads.innkeeper.oauth.OAuthDirectives.hasOneOfTheScopes
 import org.zalando.spearheads.innkeeper.oauth.{AuthenticatedUser, Scopes}
 import org.zalando.spearheads.innkeeper.services.RoutesService
 import org.zalando.spearheads.innkeeper.api.JsonProtocols._
-import org.zalando.spearheads.innkeeper.dao.{PathIdFilter, PathUriFilter, QueryFilter, RouteNameFilter, TeamFilter}
+import org.zalando.spearheads.innkeeper.dao.{Pagination, PathIdFilter, PathUriFilter, QueryFilter, RouteNameFilter, TeamFilter}
+import scala.util.Try
 
 /**
  * @author dpersa
@@ -44,11 +45,7 @@ class GetRoutes @Inject() (
                   PathUriFilter(pathUris)
                 )
                 case ("path_id", pathIdStrings) =>
-                  val pathIds = pathIdStrings.flatMap(idString => try {
-                    Some(idString.toLong)
-                  } catch {
-                    case e: NumberFormatException => None
-                  })
+                  val pathIds = pathIdStrings.flatMap(idString => Try(idString.toLong).toOption)
 
                   if (pathIds.nonEmpty) {
                     Some[QueryFilter](
@@ -60,7 +57,10 @@ class GetRoutes @Inject() (
                 case _ => None
               }.toList
 
-              val pagination = None
+              val pagination = for {
+                page <- parameterMultiMap.get("page").flatMap(_.headOption).flatMap(s => Try(s.toInt).toOption)
+                perPage <- parameterMultiMap.get("per_page").flatMap(_.headOption).flatMap(s => Try(s.toInt).toOption)
+              } yield Pagination(page, perPage)
 
               logger.debug(s"Filters: $filters. Embed: $embed. Pagination: $pagination")
 
