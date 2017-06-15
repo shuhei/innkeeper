@@ -326,16 +326,32 @@ class RoutesPostgresRepoSpec extends FunSpec with BeforeAndAfter with Matchers w
       it("should select routes with pagination") {
         insertRoute("R1")
         insertRoute("R2")
-        val route3 = insertRoute("R3")
-        val route4 = insertRoute("R4")
-        insertRoute("R5")
+        insertRoute("R3")
+        insertRoute("R4")
+        val route5 = insertRoute("R5")
+        val route6 = insertRoute("R6")
+        insertRoute("R7")
 
-        val result: Seq[(RouteRow, PathRow)] = routesRepo.selectFiltered(Seq.empty, Some(Pagination(2, 2)))
-        // TODO: Test also order.
-        result.flatMap(_._1.id).toSet should be (Set(route3.id, route4.id).flatten)
+        val pagination = Some(Pagination(3, 2))
+        val result: Seq[(RouteRow, PathRow)] = routesRepo.selectFiltered(Seq.empty, pagination)
+        result.flatMap(_._1.id).toList should be (List(route5.id, route6.id).flatten)
       }
 
-      // TODO: Test filtering and pagination together.
+      it("should filter by name with pagination") {
+        insertRoute("R1")
+        insertRoute("R2")
+        insertRoute("R3")
+        insertRoute("R4")
+        insertRoute("R5")
+        val route6 = insertRoute("R6")
+        val route7 = insertRoute("R7")
+
+        val filters = Seq(RouteNameFilter(Seq("R2", "R3", "R5", "R6", "R7")))
+        val pagination = Some(Pagination(2, 3))
+        val result: Seq[(RouteRow, PathRow)] = routesRepo.selectFiltered(filters, pagination)
+
+        result.flatMap(_._1.id).toList should be (List(route6.id, route7.id).flatten)
+      }
     }
 
     describe("#selectActiveRoutesData") {
